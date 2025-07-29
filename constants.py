@@ -9,3 +9,9 @@ PARAMS = {
     'include_24hr_change': 'true',
     'include_last_updated_at': 'true',
 }
+RENAME_MAP = {
+    'usd': 'Price of marking (USD)',
+    'usd_market_cap': 'Market capitalization (USD)',
+    'usd_24h_change': 'Changes in 24 hours (in percent)',
+    'last_updated_at': 'Last update information (GMT+2 Central Europe)'
+}
