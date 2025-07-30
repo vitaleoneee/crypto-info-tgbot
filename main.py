@@ -7,12 +7,18 @@ from aiogram import types
 from aiogram.filters import Command
 from decouple import config
 
-from get_crypto_data import get_assets_price
+from constants import MAX_TOP_SIZE, HELP_TEXT
+from get_crypto_data import get_assets_price, get_top_capitalization
+from utils import parse_command_args
 
 BOT_TOKEN = config('BOT_TOKEN')
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+
+async def response_text(message: types.Message, text: str):
+    await message.answer(text=text, parse_mode='HTML')
 
 
 @dp.message(Command('start'))
@@ -24,28 +30,47 @@ async def start(message: types.Message):
 
 @dp.message(Command('price'))
 async def crypto_response(message: types.Message):
-    args = message.text.split()
-    if len(args) > 2:
-        await message.answer(text='❌ You used the /price command incorrectly, reread /help and try again.')
+    status, args = parse_command_args(message)
+    if status == 'too_many':
+        await response_text(message, text='❌ You used the /price command incorrectly, reread /help and try again.')
+        return
     # If the command was called without additional arguments
-    elif len(args) == 1:
+    elif status == 'none':
         send_text = '<b>🔥 Popular crypto derivatives right now (Futures)</b>:\n\n'
         crypto_info = get_assets_price()
         send_text += crypto_info
-        await message.answer(text=str(send_text), parse_mode='HTML')
+        await response_text(message, str(send_text))
     else:
-        send_text = f'<b>🔥 Info about your coin(s) - {args[1].upper()}</b>:\n\n'
-        crypto_info = get_assets_price(args[1])
+        send_text = f'<b>🔥 Info about your coin(s) - {args[0].upper()}</b>:\n\n'
+        crypto_info = get_assets_price(args[0])
         send_text += crypto_info
-        await message.answer(text=str(send_text), parse_mode='HTML')
+        await response_text(message, str(send_text))
+
+
+@dp.message(Command('top'))
+async def top_response(message: types.Message):
+    status, args = parse_command_args(message)
+    if status == 'too_many':
+        await response_text(message, text='❌ You used the /top command incorrectly, reread /help and try again.')
+        return
+    elif status == 'none':
+        top_assets = get_top_capitalization()
+        await response_text(message, str(top_assets))
+    else:
+        try:
+            if int(args[0]) > MAX_TOP_SIZE or int(args[0]) < 0:
+                await response_text(message, '❌ The maximum number of assets in the top is 50!')
+                return
+        except ValueError:
+            await response_text(message, '❌ You entered something other than a number!')
+            return
+        top_assets = get_top_capitalization(args[0])
+        await response_text(message, top_assets)
 
 
 @dp.message(Command('help'))
 async def help_response(message: types.Message):
-    await message.answer(text='Type /price to get prices of the most popular assets.\n'
-                              'Add the name of the cryptocurrency to the command to get details about it (e.g. "ВТС" or "btc")'
-                              ' or add several names separated by commas (e.g. "ВТС, ЕТН, ada" or "btc, LINK, avax")'
-                              ' to get information about several cryptocurrencies at once.\nEnjoy!')
+    await response_text(message, HELP_TEXT)
 
 
 async def main():

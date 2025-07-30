@@ -1,3 +1,16 @@
+MAX_TOP_SIZE = 50
+HELP_TEXT = """
+<b>📘 Bot Commands:</b>
+
+/price — Show prices of top cryptocurrencies.
+    • /price btc
+    • /price btc,eth,ada
+
+/top — Show top assets by market capitalization (max value is 50).
+    • /top 10 — show top 10 coins
+
+/help — Show this help message.
+"""
 REQUEST_LINK_INFO_ABOUT_CRYPTO = "https://api.coingecko.com/api/v3/coins/markets"
 HEADERS = {
     'Accepts': 'application/json',
@@ -6,7 +19,7 @@ PARAMS = {
     'vs_currency': 'usd',
     'precision': '2',
 }
-RENAME_MAP = {
+MAIN_RENAME_MAP = {
     'current_price': 'Price of marking (USD)',
     'market_cap': 'Market capitalization (USD)',
     'market_cap_rank': 'Market cap rank',
@@ -24,4 +37,8 @@ RENAME_MAP = {
     'atl_change_percentage': 'ATL change percentage (%)',
     'atl_date': 'ATL date',
     'last_updated': 'Last update information (GMT+2 Central Europe)',
+}
+
+TOP_CAPITALIZATION_RENAME_MAP = {
+    'market_cap': 'Market capitalization (USD)',
 }
