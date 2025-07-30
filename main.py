@@ -7,7 +7,7 @@ from aiogram import types
 from aiogram.filters import Command
 from decouple import config
 
-from get_crypto_data import get_popular_derivatives
+from get_crypto_data import get_assets_price
 
 BOT_TOKEN = config('BOT_TOKEN')
 
@@ -30,12 +30,12 @@ async def crypto_response(message: types.Message):
     # If the command was called without additional arguments
     elif len(args) == 1:
         send_text = '<b>🔥 Popular crypto derivatives right now (Futures)</b>:\n\n'
-        crypto_info = get_popular_derivatives()
+        crypto_info = get_assets_price()
         send_text += crypto_info
         await message.answer(text=str(send_text), parse_mode='HTML')
     else:
         send_text = f'<b>🔥 Info about your coin(s) - {args[1].upper()}</b>:\n\n'
-        crypto_info = get_popular_derivatives(args[1])
+        crypto_info = get_assets_price(args[1])
         send_text += crypto_info
         await message.answer(text=str(send_text), parse_mode='HTML')
 
