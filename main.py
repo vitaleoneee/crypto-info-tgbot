@@ -1,14 +1,16 @@
 import asyncio
 import logging
 
-from aiogram import Bot
+from aiogram import Bot, F
 from aiogram import Dispatcher
 from aiogram import types
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from decouple import config
 
 from constants import MAX_TOP_SIZE, HELP_TEXT
 from get_crypto_data import get_assets_price, get_top_capitalization
+from states import PriceState
 from utils import parse_command_args
 
 BOT_TOKEN = config('BOT_TOKEN')
@@ -29,22 +31,22 @@ async def start(message: types.Message):
 
 
 @dp.message(Command('price'))
-async def crypto_response(message: types.Message):
-    status, args = parse_command_args(message)
-    if status == 'too_many':
-        await response_text(message, text='❌ You used the /price command incorrectly, reread /help and try again.')
-        return
-    # If the command was called without additional arguments
-    elif status == 'none':
-        send_text = '<b>🔥 Popular crypto derivatives right now (Futures)</b>:\n\n'
-        crypto_info = get_assets_price()
-        send_text += crypto_info
-        await response_text(message, str(send_text))
-    else:
-        send_text = f'<b>🔥 Info about your coin(s) - {args[0].upper()}</b>:\n\n'
-        crypto_info = get_assets_price(args[0])
-        send_text += crypto_info
-        await response_text(message, str(send_text))
+async def handle_start_price(message: types.Message, state: FSMContext):
+    await state.set_state(PriceState.cryptocurrency)
+    await response_text(message, 'Enter the name of the cryptocurrency(ies) 🪙:')
+
+
+@dp.message(PriceState.cryptocurrency, F.text)
+async def handle_cryptocurrency_price(message: types.Message, state: FSMContext):
+    await state.update_data(cryptocurrency=message.text)
+    await state.clear()
+    crypto_info = get_assets_price(message.text)
+    await response_text(message, str(crypto_info))
+
+
+@dp.message(PriceState.cryptocurrency)
+async def handle_cryptocurrency_price_invalid(message: types.Message):
+    await response_text(message, '❌ You entered something that is not text. Try again.')
 
 
 @dp.message(Command('top'))

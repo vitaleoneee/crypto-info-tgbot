@@ -20,6 +20,8 @@ def get_top_capitalization(count=10):
 
 
 def get_assets_price(symbols='btc,eth,sol,xrp'):
+    if len(symbols.split()) > 1:
+        return 'Write the symbol of the cryptocurrency or separate them with commas if you want several (e.g. btc,eth,ada)'
     params = deepcopy(PARAMS)
     params['symbols'] = symbols
     try:

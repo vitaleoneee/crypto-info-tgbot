@@ -51,6 +51,7 @@ def create_price_info_text(obj):
     for i, d in enumerate(obj):
         symbol = d.get('symbol', '???').upper()
         price_change = d.get('price_change_percentage_24h', 0)
+        text += f'<b>🔥 Info about your coin(s) - {symbol.upper()}</b>:\n\n'
         text += f"{i + 1}: <b>{symbol}</b> {add_symbol(price_change)}\n"
 
         raw_time = d.get('last_updated')
