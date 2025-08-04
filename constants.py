@@ -3,11 +3,17 @@ HELP_TEXT = """
 <b>📘 Bot Commands:</b>
 
 /price — Show prices of top cryptocurrencies.
-    • /price btc
-    • /price btc,eth,ada
+    You will be asked to write a cryptocurrency.
+    Attention! You must write an existing cryptocurrency or several cryptocurrencies
+    separated by commas (e.g. eth, btc, ada)
 
 /top — Show top assets by market capitalization (max value is 50).
     • /top 10 — show top 10 coins
+    
+/alert — Set alert on cryptocurrency.
+    You will be asked to specify the name of the cryptocurrency,
+    the alert expiration time (maximum 24 hours!) and the price
+    of the cryptocurrency to trigger the alert.
 
 /help — Show this help message.
 """

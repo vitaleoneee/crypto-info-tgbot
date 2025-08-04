@@ -1,9 +1,12 @@
-from datetime import datetime
+import asyncio
+from copy import deepcopy
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import requests
 from aiogram import types
 
-from constants import MAIN_RENAME_MAP, TOP_CAPITALIZATION_RENAME_MAP
+from constants import MAIN_RENAME_MAP, TOP_CAPITALIZATION_RENAME_MAP, PARAMS, REQUEST_LINK_INFO_ABOUT_CRYPTO, HEADERS
 
 
 def add_symbol(d_value):
@@ -87,3 +90,41 @@ def create_top_capitalization_text(obj):
 
         text += "\n"
     return text
+
+
+async def create_alert_task(bot, chat_id, symbol, timeout, price, direction="LONG"):
+    end_time = datetime.now() + timedelta(hours=int(timeout))
+
+    while datetime.now() < end_time:
+        try:
+            params = deepcopy(PARAMS)
+            params['symbols'] = symbol
+            response = requests.get(REQUEST_LINK_INFO_ABOUT_CRYPTO, params=params, headers=HEADERS).json()
+            if not response or 'current_price' not in response[0]:
+                await bot.send_message(chat_id=chat_id, text=f"⚠️ No data found for {symbol.upper()}!")
+                return
+
+            current_price = response[0]['current_price']
+            price = float(price)
+
+            if direction.upper() == "LONG" and current_price > price:
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=f"🔔 LONG alert: {symbol.upper()} > {price} → now {current_price}"
+                )
+                return
+
+            elif direction.upper() == "SHORT" and current_price < price:
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=f"🔻 SHORT alert: {symbol.upper()} < {price} → now {current_price}"
+                )
+                return
+
+        except Exception:
+            await bot.send_message(chat_id=chat_id, text="⚠️ Error during alert check!")
+            return
+
+        await asyncio.sleep(60)
+
+    await bot.send_message(chat_id=chat_id, text=f"⏰ Alert for {symbol.upper()} expired.")
