@@ -29,5 +29,5 @@ def get_assets_price(symbols='btc,eth,sol,xrp'):
         if response:
             return create_price_info_text(response)
         return 'Information about your asset was not found!'
-    except (ConnectionError, Timeout, TooManyRedirects) as e:
+    except (ConnectionError, Timeout, TooManyRedirects):
         return 'Error on the bot side. Contact the developer @vitaleoneee'

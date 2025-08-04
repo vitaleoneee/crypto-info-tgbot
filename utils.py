@@ -38,6 +38,16 @@ def format_large_number(n):
     return f"{n:.0f}"
 
 
+def format_raw_date(date_obj):
+    try:
+        format_date = datetime.fromisoformat(
+            date_obj.replace('Z', '+00:00')
+        ).astimezone(ZoneInfo('Europe/Prague')).strftime('%Y-%m-%d %H:%M:%S')
+    except (ValueError, TypeError):
+        return '-'
+    return format_date
+
+
 def parse_command_args(message: types.Message, max_args: int = 1):
     raw_args = message.text.split()
     args = [arg.strip() for arg in raw_args[1:]]
@@ -54,24 +64,21 @@ def create_price_info_text(obj):
     for i, d in enumerate(obj):
         symbol = d.get('symbol', '???').upper()
         price_change = d.get('price_change_percentage_24h', 0)
-        text += f'<b>🔥 Info about your coin(s) - {symbol.upper()}</b>:\n\n'
+        text += f'<b>🔥 Info about your coin(s) - {symbol}</b>:\n\n'
         text += f"{i + 1}: <b>{symbol}</b> {add_symbol(price_change)}\n"
 
-        raw_time = d.get('last_updated')
-        if raw_time:
-            try:
-                last_updated = datetime.fromisoformat(
-                    raw_time.replace('Z', '+00:00')
-                ).astimezone(ZoneInfo('Europe/Prague')).strftime('%Y-%m-%d %H:%M:%S')
-            except Exception:
-                last_updated = '-'
-        else:
-            last_updated = '-'
+        raw_time = {
+            'last_updated': d.get('last_updated'),
+            'ath_date': d.get('ath_date'),
+            'atl_date': d.get('atl_date'),
+        }
+        res_dates = {k: format_raw_date(v) if v else '-' for k, v in raw_time.items()}
 
         for k, v in d.items():
-            if k in MAIN_RENAME_MAP:
-                value = last_updated if k == 'last_updated' else v
-                text += f"{MAIN_RENAME_MAP[k]}: <i>{value}</i>\n"
+            if k in raw_time:
+                text += f"{MAIN_RENAME_MAP[k]}: <i>{res_dates[k]}</i>\n"
+            elif k in MAIN_RENAME_MAP:
+                text += f"{MAIN_RENAME_MAP[k]}: <i>{v}</i>\n"
 
         text += "\n"
     return text
@@ -86,7 +93,9 @@ def create_top_capitalization_text(obj):
 
         for k, v in d.items():
             if k in TOP_CAPITALIZATION_RENAME_MAP:
-                text += f"{TOP_CAPITALIZATION_RENAME_MAP[k]}: <i>${format_large_number(v)}</i>\n"
+                value = format_large_number(v)
+                if value is not None:
+                    text += f"{TOP_CAPITALIZATION_RENAME_MAP[k]}: <i>${value}</i>\n"
 
         text += "\n"
     return text
@@ -121,8 +130,8 @@ async def create_alert_task(bot, chat_id, symbol, timeout, price, direction="LON
                 )
                 return
 
-        except Exception:
-            await bot.send_message(chat_id=chat_id, text="⚠️ Error during alert check!")
+        except (requests.RequestException, ValueError, KeyError) as e:
+            await bot.send_message(chat_id=chat_id, text=f"⚠️ Error: {e}")
             return
 
         await asyncio.sleep(60)
